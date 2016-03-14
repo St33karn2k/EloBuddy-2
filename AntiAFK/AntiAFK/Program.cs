@@ -38,7 +38,7 @@ namespace AntiAFK
                     lastTick = currentTick;
                     lastPos = currentPos;
                 }
-                if ((currentTick - lastTick) > 40000)
+                if ((currentTick - lastTick) > 70000)
                     Game.QuitGame();
             }
         }
