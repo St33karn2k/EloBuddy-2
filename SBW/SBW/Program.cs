@@ -38,6 +38,7 @@ namespace SBW
             Config.AddLabel("200 + normal player");
             Config.Add("showCPS", new CheckBox("Show action per sec", true));
             Config.Add("showWay", new CheckBox("Show way points", true));
+            Config.Add("blockOut", new CheckBox("Block targeted action out screen", true));
             Advanced = Config.AddSubMenu("Advanced", "AdvancedSettings");
             Advanced.AddGroupLabel("Advanced Settings");
             Advanced.Add("cut", new CheckBox("CUT SKILLSHOTS", true));
@@ -110,6 +111,22 @@ namespace SBW
             if (!Config["enable"].Cast<CheckBox>().CurrentValue)
                 return;
 
+            var spellPosition = args.EndPosition;
+            if (args.Target != null && Config["blockOut"].Cast<CheckBox>().CurrentValue && !Render.OnScreen(Drawing.WorldToScreen(args.Target.Position)))
+            {
+                if (Config["blockOut"].Cast<CheckBox>().CurrentValue && !Render.OnScreen(Drawing.WorldToScreen(args.Target.Position)))
+                {
+                    Console.WriteLine("BLOCK SPELL OUT SCREEN");
+                    args.Process = false;
+                    return;
+                }
+                spellPosition = args.Target.Position;
+            }
+            // IGNORE TARGETED SPELLS
+            if (spellPosition.IsZero)
+                return;
+            
+
             // IGNORE TARGETED SPELLS
             if (args.EndPosition.IsZero)
             return;
@@ -153,7 +170,7 @@ namespace SBW
                 return;
 
             var screenPos = Drawing.WorldToScreen(args.TargetPosition);
-          
+
             //Console.WriteLine(args.Order);
             if (Environment.TickCount - LastMouseTime < Config["ClickTime"].Cast<Slider>().CurrentValue + (LastMousePos.Distance(screenPos) / 15))
             {
@@ -164,7 +181,16 @@ namespace SBW
 
             //Console.WriteLine("DIS " + LastMousePos.Distance(screenPos) + " TIME " + (Utils.TickCount - LastMouseTime));
             if (args.Order == GameObjectOrder.AttackUnit)
-                LastType = 1;
+                if (args.Order == GameObjectOrder.AttackUnit)
+                {
+                    if (Config["blockOut"].Cast<CheckBox>().CurrentValue && !Render.OnScreen(screenPos))
+                    {
+                        args.Process = false;
+                        Console.WriteLine("BLOCK AA OUT SCREEN");
+                    }
+                    LastType = 1;
+                }
+
             else
                 LastType = 0;
 
